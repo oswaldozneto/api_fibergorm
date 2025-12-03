@@ -4,7 +4,7 @@ API RESTful de produtos desenvolvida em Go utilizando **Fiber** como framework w
 
 ## 🚀 Tecnologias Utilizadas
 
-- **Go 1.21** - Linguagem de programação
+- **Go 1.23** - Linguagem de programação
 - **Fiber v2** - Framework web extremamente rápido
 - **GORM** - ORM para Go
 - **PostgreSQL** - Banco de dados relacional
@@ -19,43 +19,75 @@ API RESTful de produtos desenvolvida em Go utilizando **Fiber** como framework w
 api_fibergorm/
 ├── cmd/
 │   └── api/
-│       └── main.go          # Ponto de entrada da aplicação
+│       └── main.go              # Ponto de entrada da aplicação
 ├── internal/
 │   ├── config/
-│   │   └── config.go        # Configurações e logger
+│   │   └── config.go            # Configurações e logger
 │   ├── database/
-│   │   └── database.go      # Conexão com banco de dados
+│   │   ├── database.go          # Conexão e migrations
+│   │   └── seed.go              # Carga inicial de dados
 │   ├── dto/
-│   │   └── produto_dto.go   # Data Transfer Objects
+│   │   ├── categoria_dto.go     # DTOs de Categoria
+│   │   └── produto_dto.go       # DTOs de Produto
 │   ├── handler/
-│   │   └── produto_handler.go # Controllers/Handlers HTTP
+│   │   ├── categoria_handler.go # Controller de Categorias
+│   │   └── produto_handler.go   # Controller de Produtos
 │   ├── middleware/
-│   │   └── middleware.go    # Middlewares da aplicação
+│   │   └── middleware.go        # Middlewares da aplicação
 │   ├── models/
-│   │   └── produto.go       # Entidades/Models
+│   │   ├── categoria.go         # Entidade Categoria
+│   │   └── produto.go           # Entidade Produto
 │   ├── repository/
-│   │   └── produto_repository.go # Camada de acesso a dados
+│   │   ├── categoria_repository.go
+│   │   └── produto_repository.go
 │   ├── routes/
-│   │   └── routes.go        # Configuração de rotas
+│   │   └── routes.go            # Configuração de rotas
 │   ├── service/
-│   │   └── produto_service.go # Regras de negócio
+│   │   ├── categoria_service.go # Regras de negócio
+│   │   └── produto_service.go
 │   └── validator/
-│       └── validator.go     # Validador customizado
-├── docs/
-│   ├── docs.go              # Documentação Swagger
-│   └── swagger.json         # Especificação OpenAPI
-├── docker-compose.yml       # Orquestração de containers
-├── Dockerfile               # Build da aplicação
-├── go.mod                   # Dependências Go
+│       └── validator.go         # Validador customizado
+├── docs/                        # Documentação Swagger
+├── docker-compose.yml
+├── Dockerfile
+├── go.mod
 └── README.md
 ```
 
-## 🏃‍♂️ Como Executar
+## ⚙️ Variáveis de Ambiente
 
-### Pré-requisitos
-- Go 1.21+
-- Docker e Docker Compose (opcional)
-- PostgreSQL (se não usar Docker)
+Todas as variáveis são **opcionais** e possuem valores padrão:
+
+### Servidor
+
+| Variável | Descrição | Padrão |
+|----------|-----------|--------|
+| `SERVER_PORT` | Porta do servidor HTTP | `3000` |
+| `SERVER_READ_TIMEOUT` | Timeout de leitura (segundos) | `10` |
+| `SERVER_WRITE_TIMEOUT` | Timeout de escrita (segundos) | `10` |
+
+### Banco de Dados PostgreSQL
+
+| Variável | Descrição | Padrão |
+|----------|-----------|--------|
+| `DB_HOST` | Host do PostgreSQL | `localhost` |
+| `DB_PORT` | Porta do PostgreSQL | `5432` |
+| `DB_USER` | Usuário do banco | `postgres` |
+| `DB_PASSWORD` | Senha do banco | `postgres` |
+| `DB_NAME` | Nome do banco de dados | `produtos_db` |
+| `DB_SSLMODE` | Modo SSL (disable, require, verify-ca, verify-full) | `disable` |
+| `DB_MAX_OPEN_CONNS` | Máximo de conexões abertas | `10` |
+| `DB_MAX_IDLE_CONNS` | Máximo de conexões ociosas | `5` |
+| `DB_CONN_MAX_LIFETIME` | Tempo de vida da conexão (minutos) | `30` |
+
+### Logging
+
+| Variável | Descrição | Padrão |
+|----------|-----------|--------|
+| `LOG_LEVEL` | Nível de log (debug, info, warn, error) | `debug` |
+| `LOG_FORMAT` | Formato do log (json, text) | `json` |
+
+## 🏃‍♂️ Como Executar
 
 ### Com Docker (Recomendado)
 
@@ -69,41 +101,65 @@ docker-compose logs -f api
 
 ### Sem Docker
 
-1. Configure o PostgreSQL e crie o banco de dados `produtos_db`
-
-2. Configure as variáveis de ambiente (ou use os valores padrão):
 ```bash
-export DB_HOST=localhost
-export DB_PORT=5432
-export DB_USER=postgres
-export DB_PASSWORD=postgres
-export DB_NAME=produtos_db
-export SERVER_PORT=3000
-```
-
-3. Execute a aplicação:
-```bash
+# A aplicação cria automaticamente o banco de dados se não existir!
 go mod download
 go run cmd/api/main.go
 ```
 
+Ou com variáveis personalizadas:
+
+```bash
+DB_HOST=meuhost DB_PASSWORD=minhasenha go run cmd/api/main.go
+```
+
 ## 📚 Endpoints da API
+
+### Categorias
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | `/api/v1/categorias` | Criar categoria |
+| GET | `/api/v1/categorias` | Listar categorias (paginado) |
+| GET | `/api/v1/categorias/ativas` | Listar apenas ativas |
+| GET | `/api/v1/categorias/:id` | Buscar por ID |
+| GET | `/api/v1/categorias/:id/produtos` | Categoria com seus produtos |
+| PUT | `/api/v1/categorias/:id` | Atualizar categoria |
+| DELETE | `/api/v1/categorias/:id` | Excluir categoria |
+
+### Produtos
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | `/api/v1/produtos` | Criar produto |
+| GET | `/api/v1/produtos` | Listar produtos (paginado) |
+| GET | `/api/v1/produtos/categoria/:id` | Produtos por categoria |
+| GET | `/api/v1/produtos/:id` | Buscar por ID |
+| PUT | `/api/v1/produtos/:id` | Atualizar produto |
+| DELETE | `/api/v1/produtos/:id` | Excluir produto |
+
+### Outros
 
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
 | GET | `/health` | Health check |
 | GET | `/swagger/*` | Documentação Swagger |
-| POST | `/api/v1/produtos` | Criar produto |
-| GET | `/api/v1/produtos` | Listar produtos (paginado) |
-| GET | `/api/v1/produtos/:id` | Buscar produto por ID |
-| PUT | `/api/v1/produtos/:id` | Atualizar produto |
-| DELETE | `/api/v1/produtos/:id` | Excluir produto |
 
 ## 📖 Documentação Swagger
 
 Acesse a documentação interativa em: `http://localhost:3000/swagger/`
 
 ## 🔍 Exemplos de Requisições
+
+### Criar Categoria
+```bash
+curl -X POST http://localhost:3000/api/v1/categorias \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nome": "Eletrônicos",
+    "descricao": "Produtos eletrônicos em geral"
+  }'
+```
 
 ### Criar Produto
 ```bash
@@ -112,48 +168,59 @@ curl -X POST http://localhost:3000/api/v1/produtos \
   -d '{
     "codigo": "PROD001",
     "descricao": "Notebook Dell Inspiron",
-    "preco": 3599.90
+    "preco": 3599.90,
+    "categoria_id": 1
   }'
 ```
 
-### Listar Produtos
+### Listar Produtos com Categoria
 ```bash
 curl http://localhost:3000/api/v1/produtos?page=1&page_size=10
 ```
 
-### Buscar por ID
+### Buscar Categoria com Produtos
 ```bash
-curl http://localhost:3000/api/v1/produtos/1
+curl http://localhost:3000/api/v1/categorias/1/produtos
 ```
 
-### Atualizar Produto
-```bash
-curl -X PUT http://localhost:3000/api/v1/produtos/1 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "preco": 3299.90
-  }'
+## 🔗 Relacionamentos (GORM)
+
+```
+┌─────────────┐       ┌─────────────┐
+│  Categoria  │ 1───N │   Produto   │
+├─────────────┤       ├─────────────┤
+│ ID          │       │ ID          │
+│ Nome        │       │ Codigo      │
+│ Descricao   │       │ Descricao   │
+│ Ativo       │       │ Preco       │
+│             │       │ CategoriaID │◄── FK obrigatória
+└─────────────┘       └─────────────┘
 ```
 
-### Excluir Produto
-```bash
-curl -X DELETE http://localhost:3000/api/v1/produtos/1
-```
+Recursos do GORM demonstrados:
+- **`foreignKey`** - Define chave estrangeira
+- **`Preload()`** - Eager loading de relacionamentos
+- **`AutoMigrate`** - Criação automática de tabelas e FKs
 
 ## ✅ Validações de Negócio
 
-A API implementa as seguintes validações:
+### Categorias
+- Nome único e obrigatório (mín. 2 caracteres)
+- Não é possível excluir categoria com produtos
 
-- **Código único**: Não permite duplicidade de códigos
-- **Código obrigatório**: Campo código é obrigatório
-- **Descrição mínima**: Mínimo de 3 caracteres
-- **Preço positivo**: Preço deve ser maior que zero
+### Produtos
+- Código único e obrigatório
+- Descrição mínima de 3 caracteres
+- Preço deve ser maior que zero
+- Categoria obrigatória e deve estar ativa
 
-## 🔒 Validações de Entrada (validator/v10)
+## 🌱 Seed de Dados
 
-- `codigo`: obrigatório, 1-50 caracteres
-- `descricao`: obrigatório, 3-255 caracteres
-- `preco`: obrigatório, maior que 0
+Na primeira execução, a aplicação:
+1. Cria o banco de dados automaticamente
+2. Executa as migrations (criação de tabelas)
+3. Cria uma categoria padrão "Geral"
+4. Atualiza produtos órfãos para a categoria padrão
 
 ## 📝 Logs
 
@@ -178,17 +245,11 @@ Os logs são estruturados em formato JSON usando Logrus:
 4. **Model**: Representa as entidades do domínio
 5. **DTO**: Objetos de transferência de dados entre camadas
 
-## 🧪 Testando a POC
-
-1. Inicie os containers: `docker-compose up -d`
-2. Acesse o Swagger: `http://localhost:3000/swagger/`
-3. Teste os endpoints através da interface Swagger ou curl
-
 ## 📈 Benefícios Demonstrados
 
-- **Fiber**: Alta performance, sintaxe familiar (Express-like), excelente documentação
-- **GORM**: ORM maduro, migrations automáticas, suporte a relacionamentos
+- **Fiber**: Alta performance, sintaxe familiar (Express-like)
+- **GORM**: ORM maduro, migrations automáticas, relacionamentos
 - **Arquitetura limpa**: Fácil manutenção e escalabilidade
 - **Logs estruturados**: Facilita debugging e monitoramento
 - **Swagger**: Documentação automática e interativa
-
+- **Configuração flexível**: Variáveis de ambiente opcionais com defaults sensatos

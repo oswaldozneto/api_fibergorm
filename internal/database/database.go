@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"time"
 
 	"api_fibergorm/internal/config"
 	"api_fibergorm/internal/models"
@@ -43,6 +44,23 @@ func Connect(cfg *config.Config, log *logrus.Logger) (*gorm.DB, error) {
 		log.WithError(err).Error("Falha ao conectar ao banco de dados")
 		return nil, err
 	}
+
+	// Configura o pool de conexões
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.WithError(err).Error("Falha ao obter conexão SQL")
+		return nil, err
+	}
+
+	sqlDB.SetMaxOpenConns(cfg.DBMaxOpenConns)
+	sqlDB.SetMaxIdleConns(cfg.DBMaxIdleConns)
+	sqlDB.SetConnMaxLifetime(time.Duration(cfg.DBConnMaxLifetime) * time.Minute)
+
+	log.WithFields(logrus.Fields{
+		"max_open_conns":    cfg.DBMaxOpenConns,
+		"max_idle_conns":    cfg.DBMaxIdleConns,
+		"conn_max_lifetime": fmt.Sprintf("%dm", cfg.DBConnMaxLifetime),
+	}).Info("Pool de conexões configurado")
 
 	log.Info("Conexão com o banco de dados estabelecida com sucesso")
 	return db, nil
