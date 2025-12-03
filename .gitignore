@@ -1,0 +1,44 @@
+# Binários
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+main
+
+# Arquivos de teste
+*.test
+
+# Diretórios de build
+/bin/
+/build/
+/dist/
+
+# Arquivos de IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Arquivos de ambiente
+.env
+.env.local
+
+# Arquivos de log
+*.log
+
+# Dependências
+/vendor/
+
+# Coverage
+coverage.out
+coverage.html
+
+# Arquivos temporários
+tmp/
+*.tmp
+
+# OS específicos
+.DS_Store
+Thumbs.db
+

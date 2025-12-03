@@ -1,0 +1,284 @@
+basePath: /
+definitions:
+  dto.CreateProdutoRequest:
+    description: Dados para criação de um novo produto
+    properties:
+      codigo:
+        example: PROD001
+        maxLength: 50
+        minLength: 1
+        type: string
+      descricao:
+        example: Produto de Exemplo
+        maxLength: 255
+        minLength: 3
+        type: string
+      preco:
+        example: 99.9
+        type: number
+    required:
+    - codigo
+    - descricao
+    - preco
+    type: object
+  dto.ErrorResponse:
+    description: Resposta de erro padrão da API
+    properties:
+      details:
+        additionalProperties:
+          type: string
+        type: object
+      error:
+        example: Erro de validação
+        type: string
+    type: object
+  dto.PaginatedResponse:
+    description: Resposta paginada com lista de produtos
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.ProdutoResponse'
+        type: array
+      page:
+        example: 1
+        type: integer
+      page_size:
+        example: 10
+        type: integer
+      total:
+        example: 100
+        type: integer
+      total_pages:
+        example: 10
+        type: integer
+    type: object
+  dto.ProdutoResponse:
+    description: Dados de resposta de um produto
+    properties:
+      codigo:
+        example: PROD001
+        type: string
+      created_at:
+        example: "2024-01-01 10:00:00"
+        type: string
+      descricao:
+        example: Produto de Exemplo
+        type: string
+      id:
+        example: 1
+        type: integer
+      preco:
+        example: 99.9
+        type: number
+      updated_at:
+        example: "2024-01-01 10:00:00"
+        type: string
+    type: object
+  dto.SuccessResponse:
+    description: Resposta de sucesso padrão da API
+    properties:
+      message:
+        example: Operação realizada com sucesso
+        type: string
+    type: object
+  dto.UpdateProdutoRequest:
+    description: Dados para atualização de um produto existente
+    properties:
+      codigo:
+        example: PROD001
+        maxLength: 50
+        minLength: 1
+        type: string
+      descricao:
+        example: Produto Atualizado
+        maxLength: 255
+        minLength: 3
+        type: string
+      preco:
+        example: 149.9
+        type: number
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: suporte@example.com
+    name: Suporte API
+  description: API de Produtos - POC com Fiber e GORM
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: API Produtos
+  version: "1.0"
+paths:
+  /api/v1/produtos:
+    get:
+      consumes:
+      - application/json
+      description: Retorna uma lista paginada de todos os produtos
+      parameters:
+      - default: 1
+        description: Número da página
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Tamanho da página
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.PaginatedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Listar todos os produtos
+      tags:
+      - Produtos
+    post:
+      consumes:
+      - application/json
+      description: Cria um novo produto com os dados fornecidos
+      parameters:
+      - description: Dados do produto
+        in: body
+        name: produto
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateProdutoRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.ProdutoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Criar um novo produto
+      tags:
+      - Produtos
+  /api/v1/produtos/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove um produto pelo seu ID
+      parameters:
+      - description: ID do produto
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Excluir produto
+      tags:
+      - Produtos
+    get:
+      consumes:
+      - application/json
+      description: Retorna um produto específico pelo seu ID
+      parameters:
+      - description: ID do produto
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ProdutoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Buscar produto por ID
+      tags:
+      - Produtos
+    put:
+      consumes:
+      - application/json
+      description: Atualiza os dados de um produto existente
+      parameters:
+      - description: ID do produto
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Dados para atualização
+        in: body
+        name: produto
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateProdutoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ProdutoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Atualizar produto
+      tags:
+      - Produtos
+swagger: "2.0"
