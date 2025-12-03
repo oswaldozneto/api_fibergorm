@@ -47,6 +47,11 @@ func main() {
 		log.WithError(err).Fatal("Falha ao executar migrações")
 	}
 
+	// Executa o seed de dados iniciais (categoria padrão, etc.)
+	if err := database.Seed(db, log); err != nil {
+		log.WithError(err).Fatal("Falha ao executar seed de dados")
+	}
+
 	// Cria a aplicação Fiber
 	app := fiber.New(fiber.Config{
 		AppName:      "API Produtos v1.0",

@@ -12,16 +12,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ProdutoHandler gerencia as requisições HTTP relacionadas a produtos
-type ProdutoHandler struct {
-	service   service.ProdutoService
+// CategoriaHandler gerencia as requisições HTTP relacionadas a categorias
+type CategoriaHandler struct {
+	service   service.CategoriaService
 	validator *validator.CustomValidator
 	log       *logrus.Logger
 }
 
-// NewProdutoHandler cria uma nova instância do handler de produtos
-func NewProdutoHandler(s service.ProdutoService, log *logrus.Logger) *ProdutoHandler {
-	return &ProdutoHandler{
+// NewCategoriaHandler cria uma nova instância do handler de categorias
+func NewCategoriaHandler(s service.CategoriaService, log *logrus.Logger) *CategoriaHandler {
+	return &CategoriaHandler{
 		service:   s,
 		validator: validator.New(),
 		log:       log,
@@ -29,19 +29,19 @@ func NewProdutoHandler(s service.ProdutoService, log *logrus.Logger) *ProdutoHan
 }
 
 // Create godoc
-// @Summary Criar um novo produto
-// @Description Cria um novo produto com os dados fornecidos
-// @Tags Produtos
+// @Summary Criar uma nova categoria
+// @Description Cria uma nova categoria com os dados fornecidos
+// @Tags Categorias
 // @Accept json
 // @Produce json
-// @Param produto body dto.CreateProdutoRequest true "Dados do produto"
-// @Success 201 {object} dto.ProdutoResponse
+// @Param categoria body dto.CreateCategoriaRequest true "Dados da categoria"
+// @Success 201 {object} dto.CategoriaResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 409 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /api/v1/produtos [post]
-func (h *ProdutoHandler) Create(c *fiber.Ctx) error {
-	var req dto.CreateProdutoRequest
+// @Router /api/v1/categorias [post]
+func (h *CategoriaHandler) Create(c *fiber.Ctx) error {
+	var req dto.CreateCategoriaRequest
 
 	if err := c.BodyParser(&req); err != nil {
 		h.log.WithError(err).Warn("Erro ao fazer parse do body")
@@ -59,27 +59,27 @@ func (h *ProdutoHandler) Create(c *fiber.Ctx) error {
 		})
 	}
 
-	produto, err := h.service.Create(&req)
+	categoria, err := h.service.Create(&req)
 	if err != nil {
 		return h.handleServiceError(c, err)
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(produto)
+	return c.Status(fiber.StatusCreated).JSON(categoria)
 }
 
 // GetByID godoc
-// @Summary Buscar produto por ID
-// @Description Retorna um produto específico pelo seu ID
-// @Tags Produtos
+// @Summary Buscar categoria por ID
+// @Description Retorna uma categoria específica pelo seu ID
+// @Tags Categorias
 // @Accept json
 // @Produce json
-// @Param id path int true "ID do produto"
-// @Success 200 {object} dto.ProdutoResponse
+// @Param id path int true "ID da categoria"
+// @Success 200 {object} dto.CategoriaResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 404 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /api/v1/produtos/{id} [get]
-func (h *ProdutoHandler) GetByID(c *fiber.Ctx) error {
+// @Router /api/v1/categorias/{id} [get]
+func (h *CategoriaHandler) GetByID(c *fiber.Ctx) error {
 	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
 		h.log.WithError(err).Warn("ID inválido")
@@ -88,26 +88,55 @@ func (h *ProdutoHandler) GetByID(c *fiber.Ctx) error {
 		})
 	}
 
-	produto, err := h.service.GetByID(uint(id))
+	categoria, err := h.service.GetByID(uint(id))
 	if err != nil {
 		return h.handleServiceError(c, err)
 	}
 
-	return c.JSON(produto)
+	return c.JSON(categoria)
+}
+
+// GetByIDWithProdutos godoc
+// @Summary Buscar categoria com produtos
+// @Description Retorna uma categoria com a lista de seus produtos
+// @Tags Categorias
+// @Accept json
+// @Produce json
+// @Param id path int true "ID da categoria"
+// @Success 200 {object} dto.CategoriaWithProdutosResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/v1/categorias/{id}/produtos [get]
+func (h *CategoriaHandler) GetByIDWithProdutos(c *fiber.Ctx) error {
+	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		h.log.WithError(err).Warn("ID inválido")
+		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
+			Error: "ID inválido",
+		})
+	}
+
+	categoria, err := h.service.GetByIDWithProdutos(uint(id))
+	if err != nil {
+		return h.handleServiceError(c, err)
+	}
+
+	return c.JSON(categoria)
 }
 
 // GetAll godoc
-// @Summary Listar todos os produtos
-// @Description Retorna uma lista paginada de todos os produtos
-// @Tags Produtos
+// @Summary Listar todas as categorias
+// @Description Retorna uma lista paginada de todas as categorias
+// @Tags Categorias
 // @Accept json
 // @Produce json
 // @Param page query int false "Número da página" default(1)
 // @Param page_size query int false "Tamanho da página" default(10)
-// @Success 200 {object} dto.PaginatedResponse
+// @Success 200 {object} dto.CategoriaPaginatedResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /api/v1/produtos [get]
-func (h *ProdutoHandler) GetAll(c *fiber.Ctx) error {
+// @Router /api/v1/categorias [get]
+func (h *CategoriaHandler) GetAll(c *fiber.Ctx) error {
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	pageSize, _ := strconv.Atoi(c.Query("page_size", "10"))
 
@@ -119,33 +148,17 @@ func (h *ProdutoHandler) GetAll(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
-// GetByCategoriaID godoc
-// @Summary Listar produtos por categoria
-// @Description Retorna uma lista paginada de produtos de uma categoria específica
-// @Tags Produtos
+// GetAllActive godoc
+// @Summary Listar categorias ativas
+// @Description Retorna uma lista de todas as categorias ativas (para seleção)
+// @Tags Categorias
 // @Accept json
 // @Produce json
-// @Param categoria_id path int true "ID da categoria"
-// @Param page query int false "Número da página" default(1)
-// @Param page_size query int false "Tamanho da página" default(10)
-// @Success 200 {object} dto.PaginatedResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 404 {object} dto.ErrorResponse
+// @Success 200 {array} dto.CategoriaResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /api/v1/produtos/categoria/{categoria_id} [get]
-func (h *ProdutoHandler) GetByCategoriaID(c *fiber.Ctx) error {
-	categoriaID, err := strconv.ParseUint(c.Params("categoria_id"), 10, 32)
-	if err != nil {
-		h.log.WithError(err).Warn("ID da categoria inválido")
-		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
-			Error: "ID da categoria inválido",
-		})
-	}
-
-	page, _ := strconv.Atoi(c.Query("page", "1"))
-	pageSize, _ := strconv.Atoi(c.Query("page_size", "10"))
-
-	response, err := h.service.GetByCategoriaID(uint(categoriaID), page, pageSize)
+// @Router /api/v1/categorias/ativas [get]
+func (h *CategoriaHandler) GetAllActive(c *fiber.Ctx) error {
+	response, err := h.service.GetAllActive()
 	if err != nil {
 		return h.handleServiceError(c, err)
 	}
@@ -154,20 +167,20 @@ func (h *ProdutoHandler) GetByCategoriaID(c *fiber.Ctx) error {
 }
 
 // Update godoc
-// @Summary Atualizar produto
-// @Description Atualiza os dados de um produto existente
-// @Tags Produtos
+// @Summary Atualizar categoria
+// @Description Atualiza os dados de uma categoria existente
+// @Tags Categorias
 // @Accept json
 // @Produce json
-// @Param id path int true "ID do produto"
-// @Param produto body dto.UpdateProdutoRequest true "Dados para atualização"
-// @Success 200 {object} dto.ProdutoResponse
+// @Param id path int true "ID da categoria"
+// @Param categoria body dto.UpdateCategoriaRequest true "Dados para atualização"
+// @Success 200 {object} dto.CategoriaResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 404 {object} dto.ErrorResponse
 // @Failure 409 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /api/v1/produtos/{id} [put]
-func (h *ProdutoHandler) Update(c *fiber.Ctx) error {
+// @Router /api/v1/categorias/{id} [put]
+func (h *CategoriaHandler) Update(c *fiber.Ctx) error {
 	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
 		h.log.WithError(err).Warn("ID inválido")
@@ -176,7 +189,7 @@ func (h *ProdutoHandler) Update(c *fiber.Ctx) error {
 		})
 	}
 
-	var req dto.UpdateProdutoRequest
+	var req dto.UpdateCategoriaRequest
 	if err := c.BodyParser(&req); err != nil {
 		h.log.WithError(err).Warn("Erro ao fazer parse do body")
 		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
@@ -193,27 +206,28 @@ func (h *ProdutoHandler) Update(c *fiber.Ctx) error {
 		})
 	}
 
-	produto, err := h.service.Update(uint(id), &req)
+	categoria, err := h.service.Update(uint(id), &req)
 	if err != nil {
 		return h.handleServiceError(c, err)
 	}
 
-	return c.JSON(produto)
+	return c.JSON(categoria)
 }
 
 // Delete godoc
-// @Summary Excluir produto
-// @Description Remove um produto pelo seu ID
-// @Tags Produtos
+// @Summary Excluir categoria
+// @Description Remove uma categoria pelo seu ID
+// @Tags Categorias
 // @Accept json
 // @Produce json
-// @Param id path int true "ID do produto"
+// @Param id path int true "ID da categoria"
 // @Success 200 {object} dto.SuccessResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 404 {object} dto.ErrorResponse
+// @Failure 409 {object} dto.ErrorResponse "Categoria possui produtos"
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /api/v1/produtos/{id} [delete]
-func (h *ProdutoHandler) Delete(c *fiber.Ctx) error {
+// @Router /api/v1/categorias/{id} [delete]
+func (h *CategoriaHandler) Delete(c *fiber.Ctx) error {
 	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
 	if err != nil {
 		h.log.WithError(err).Warn("ID inválido")
@@ -227,33 +241,27 @@ func (h *ProdutoHandler) Delete(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(dto.SuccessResponse{
-		Message: "Produto excluído com sucesso",
+		Message: "Categoria excluída com sucesso",
 	})
 }
 
 // handleServiceError trata os erros da camada de serviço
-func (h *ProdutoHandler) handleServiceError(c *fiber.Ctx, err error) error {
+func (h *CategoriaHandler) handleServiceError(c *fiber.Ctx, err error) error {
 	switch {
-	case errors.Is(err, service.ErrProdutoNaoEncontrado):
+	case errors.Is(err, service.ErrCategoriaNaoEncontrada):
 		return c.Status(fiber.StatusNotFound).JSON(dto.ErrorResponse{
 			Error: err.Error(),
 		})
-	case errors.Is(err, service.ErrCodigoDuplicado):
+	case errors.Is(err, service.ErrNomeDuplicado):
 		return c.Status(fiber.StatusConflict).JSON(dto.ErrorResponse{
 			Error: err.Error(),
 		})
-	case errors.Is(err, service.ErrCategoriaNaoEncontrada):
-		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
+	case errors.Is(err, service.ErrCategoriaComProdutos):
+		return c.Status(fiber.StatusConflict).JSON(dto.ErrorResponse{
 			Error: err.Error(),
 		})
-	case errors.Is(err, service.ErrCategoriaInativa):
-		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
-			Error: err.Error(),
-		})
-	case errors.Is(err, service.ErrPrecoInvalido),
-		errors.Is(err, service.ErrDescricaoMuitoCurta),
-		errors.Is(err, service.ErrCodigoVazio),
-		errors.Is(err, service.ErrCategoriaObrigatoria):
+	case errors.Is(err, service.ErrNomeVazio),
+		errors.Is(err, service.ErrNomeMuitoCurto):
 		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
 			Error: err.Error(),
 		})
@@ -264,3 +272,4 @@ func (h *ProdutoHandler) handleServiceError(c *fiber.Ctx, err error) error {
 		})
 	}
 }
+

@@ -15,6 +15,10 @@ type Produto struct {
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+
+	// Chave estrangeira para Categoria
+	CategoriaID uint      `gorm:"not null" json:"categoria_id"`
+	Categoria   Categoria `gorm:"foreignKey:CategoriaID" json:"categoria,omitempty"`
 }
 
 // TableName define o nome da tabela no banco de dados

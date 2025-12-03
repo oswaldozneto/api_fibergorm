@@ -17,6 +17,350 @@
     "host": "localhost:3000",
     "basePath": "/",
     "paths": {
+        "/api/v1/categorias": {
+            "get": {
+                "description": "Retorna uma lista paginada de todas as categorias",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categorias"
+                ],
+                "summary": "Listar todas as categorias",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Número da página",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Tamanho da página",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CategoriaPaginatedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Cria uma nova categoria com os dados fornecidos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categorias"
+                ],
+                "summary": "Criar uma nova categoria",
+                "parameters": [
+                    {
+                        "description": "Dados da categoria",
+                        "name": "categoria",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateCategoriaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CategoriaResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/categorias/ativas": {
+            "get": {
+                "description": "Retorna uma lista de todas as categorias ativas (para seleção)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categorias"
+                ],
+                "summary": "Listar categorias ativas",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.CategoriaResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/categorias/{id}": {
+            "get": {
+                "description": "Retorna uma categoria específica pelo seu ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categorias"
+                ],
+                "summary": "Buscar categoria por ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID da categoria",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CategoriaResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Atualiza os dados de uma categoria existente",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categorias"
+                ],
+                "summary": "Atualizar categoria",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID da categoria",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados para atualização",
+                        "name": "categoria",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateCategoriaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CategoriaResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Remove uma categoria pelo seu ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categorias"
+                ],
+                "summary": "Excluir categoria",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID da categoria",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Categoria possui produtos",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/categorias/{id}/produtos": {
+            "get": {
+                "description": "Retorna uma categoria com a lista de seus produtos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categorias"
+                ],
+                "summary": "Buscar categoria com produtos",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID da categoria",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CategoriaWithProdutosResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/produtos": {
             "get": {
                 "description": "Retorna uma lista paginada de todos os produtos",
@@ -99,6 +443,70 @@
                     },
                     "409": {
                         "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/produtos/categoria/{categoria_id}": {
+            "get": {
+                "description": "Retorna uma lista paginada de produtos de uma categoria específica",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Produtos"
+                ],
+                "summary": "Listar produtos por categoria",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID da categoria",
+                        "name": "categoria_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Número da página",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Tamanho da página",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PaginatedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }
@@ -275,15 +683,138 @@
         }
     },
     "definitions": {
+        "dto.CategoriaPaginatedResponse": {
+            "description": "Resposta paginada com lista de categorias",
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.CategoriaResponse"
+                    }
+                },
+                "page": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "page_size": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 50
+                },
+                "total_pages": {
+                    "type": "integer",
+                    "example": 5
+                }
+            }
+        },
+        "dto.CategoriaResponse": {
+            "description": "Dados de resposta de uma categoria",
+            "type": "object",
+            "properties": {
+                "ativo": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-01 10:00:00"
+                },
+                "descricao": {
+                    "type": "string",
+                    "example": "Produtos eletrônicos em geral"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "nome": {
+                    "type": "string",
+                    "example": "Eletrônicos"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-01-01 10:00:00"
+                }
+            }
+        },
+        "dto.CategoriaWithProdutosResponse": {
+            "description": "Dados de resposta de uma categoria com lista de produtos",
+            "type": "object",
+            "properties": {
+                "ativo": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-01 10:00:00"
+                },
+                "descricao": {
+                    "type": "string",
+                    "example": "Produtos eletrônicos em geral"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "nome": {
+                    "type": "string",
+                    "example": "Eletrônicos"
+                },
+                "produtos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ProdutoSimpleResponse"
+                    }
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-01-01 10:00:00"
+                }
+            }
+        },
+        "dto.CreateCategoriaRequest": {
+            "description": "Dados para criação de uma nova categoria",
+            "type": "object",
+            "required": [
+                "nome"
+            ],
+            "properties": {
+                "ativo": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "descricao": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "Produtos eletrônicos em geral"
+                },
+                "nome": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2,
+                    "example": "Eletrônicos"
+                }
+            }
+        },
         "dto.CreateProdutoRequest": {
             "description": "Dados para criação de um novo produto",
             "type": "object",
             "required": [
+                "categoria_id",
                 "codigo",
                 "descricao",
                 "preco"
             ],
             "properties": {
+                "categoria_id": {
+                    "type": "integer",
+                    "example": 1
+                },
                 "codigo": {
                     "type": "string",
                     "maxLength": 50,
@@ -350,6 +881,14 @@
             "description": "Dados de resposta de um produto",
             "type": "object",
             "properties": {
+                "categoria": {
+                    "$ref": "#/definitions/dto.CategoriaResponse"
+                },
+                "categoria_id": {
+                    "description": "Dados da categoria associada",
+                    "type": "integer",
+                    "example": 1
+                },
                 "codigo": {
                     "type": "string",
                     "example": "PROD001"
@@ -376,6 +915,28 @@
                 }
             }
         },
+        "dto.ProdutoSimpleResponse": {
+            "description": "Dados simplificados de um produto",
+            "type": "object",
+            "properties": {
+                "codigo": {
+                    "type": "string",
+                    "example": "PROD001"
+                },
+                "descricao": {
+                    "type": "string",
+                    "example": "Notebook Dell"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "preco": {
+                    "type": "number",
+                    "example": 3599.9
+                }
+            }
+        },
         "dto.SuccessResponse": {
             "description": "Resposta de sucesso padrão da API",
             "type": "object",
@@ -386,10 +947,35 @@
                 }
             }
         },
+        "dto.UpdateCategoriaRequest": {
+            "description": "Dados para atualização de uma categoria existente",
+            "type": "object",
+            "properties": {
+                "ativo": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "descricao": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "Produtos eletrônicos atualizados"
+                },
+                "nome": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2,
+                    "example": "Eletrônicos"
+                }
+            }
+        },
         "dto.UpdateProdutoRequest": {
             "description": "Dados para atualização de um produto existente",
             "type": "object",
             "properties": {
+                "categoria_id": {
+                    "type": "integer",
+                    "example": 2
+                },
                 "codigo": {
                     "type": "string",
                     "maxLength": 50,

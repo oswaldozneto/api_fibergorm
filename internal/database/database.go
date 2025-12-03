@@ -83,13 +83,13 @@ func createDatabaseIfNotExists(cfg *config.Config, log *logrus.Logger) error {
 
 	if !exists {
 		log.WithField("database", cfg.DBName).Info("Criando banco de dados")
-		
+
 		// Cria o banco de dados
 		createQuery := fmt.Sprintf("CREATE DATABASE %s", cfg.DBName)
 		if _, err := sqlDB.Exec(createQuery); err != nil {
 			return fmt.Errorf("falha ao criar banco de dados: %w", err)
 		}
-		
+
 		log.WithField("database", cfg.DBName).Info("Banco de dados criado com sucesso")
 	} else {
 		log.WithField("database", cfg.DBName).Debug("Banco de dados já existe")
@@ -102,9 +102,79 @@ func createDatabaseIfNotExists(cfg *config.Config, log *logrus.Logger) error {
 func Migrate(db *gorm.DB, log *logrus.Logger) error {
 	log.Info("Executando migrações do banco de dados")
 
-	err := db.AutoMigrate(&models.Produto{})
+	// Passo 1: Migra a tabela de categorias primeiro
+	if err := db.AutoMigrate(&models.Categoria{}); err != nil {
+		log.WithError(err).Error("Falha ao migrar tabela de categorias")
+		return err
+	}
+
+	// Passo 2: Verifica se a coluna categoria_id já existe na tabela produtos
+	var hasColumn bool
+	err := db.Raw(`
+		SELECT EXISTS (
+			SELECT 1 FROM information_schema.columns 
+			WHERE table_name = 'produtos' AND column_name = 'categoria_id'
+		)
+	`).Scan(&hasColumn).Error
+
 	if err != nil {
-		log.WithError(err).Error("Falha ao executar migrações")
+		// Tabela pode não existir ainda, continua normalmente
+		hasColumn = false
+	}
+
+	// Passo 3: Se a coluna não existe, precisamos fazer uma migração especial
+	if !hasColumn {
+		log.Info("Coluna categoria_id não existe, executando migração especial")
+
+		// Verifica se a tabela produtos existe e tem registros
+		var produtosCount int64
+		db.Table("produtos").Count(&produtosCount)
+
+		if produtosCount > 0 {
+			log.Info("Encontrados produtos existentes, aplicando migração com dados")
+
+			// Adiciona a coluna como NULL primeiro
+			if err := db.Exec("ALTER TABLE produtos ADD COLUMN IF NOT EXISTS categoria_id BIGINT").Error; err != nil {
+				log.WithError(err).Error("Falha ao adicionar coluna categoria_id")
+				return err
+			}
+
+			// Executa o seed para criar categoria padrão e atualizar produtos
+			if err := Seed(db, log); err != nil {
+				return err
+			}
+
+			// Agora aplica NOT NULL
+			if err := db.Exec("ALTER TABLE produtos ALTER COLUMN categoria_id SET NOT NULL").Error; err != nil {
+				log.WithError(err).Error("Falha ao definir NOT NULL em categoria_id")
+				return err
+			}
+
+			// Adiciona a FK se não existir
+			if err := db.Exec(`
+				DO $$ 
+				BEGIN
+					IF NOT EXISTS (
+						SELECT 1 FROM information_schema.table_constraints 
+						WHERE constraint_name = 'fk_produtos_categoria'
+					) THEN
+						ALTER TABLE produtos 
+						ADD CONSTRAINT fk_produtos_categoria 
+						FOREIGN KEY (categoria_id) REFERENCES categorias(id);
+					END IF;
+				END $$;
+			`).Error; err != nil {
+				log.WithError(err).Warn("Aviso ao criar FK (pode já existir)")
+			}
+
+			log.Info("Migração especial concluída")
+			return nil
+		}
+	}
+
+	// Passo 4: Migração normal do GORM
+	if err := db.AutoMigrate(&models.Produto{}); err != nil {
+		log.WithError(err).Error("Falha ao migrar tabela de produtos")
 		return err
 	}
 
