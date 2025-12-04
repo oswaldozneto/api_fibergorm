@@ -80,12 +80,8 @@ func (h *CategoriaHandler) GetAllActive(c *fiber.Ctx) error {
 func (h *CategoriaHandler) RegisterRoutes(router fiber.Router) {
 	// Rotas específicas primeiro (devem vir antes das rotas com parâmetros)
 	router.Get("/ativas", h.GetAllActive)
-
-	// Rotas base do CRUD
-	router.Post("/", h.Create)
-	router.Get("/", h.GetAll)
-	router.Get("/:id", h.GetByID)
 	router.Get("/:id/produtos", h.GetByIDWithProdutos)
-	router.Put("/:id", h.Update)
-	router.Delete("/:id", h.Delete)
+
+	// Registra as rotas padrão
+	h.BaseHandlerImpl.RegisterRoutes(router)
 }

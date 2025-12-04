@@ -73,10 +73,6 @@ func (h *ProdutoHandler) RegisterRoutes(router fiber.Router) {
 	// Rotas específicas primeiro (devem vir antes das rotas com parâmetros)
 	router.Get("/categoria/:categoria_id", h.GetByCategoriaID)
 
-	// Rotas base do CRUD
-	router.Post("/", h.Create)
-	router.Get("/", h.GetAll)
-	router.Get("/:id", h.GetByID)
-	router.Put("/:id", h.Update)
-	router.Delete("/:id", h.Delete)
+	// Registra as rotas padrão
+	h.BaseHandlerImpl.RegisterRoutes(router)
 }
