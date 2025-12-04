@@ -8,7 +8,6 @@ import (
 	"api_fibergorm/internal/models"
 	"api_fibergorm/internal/repository"
 	"api_fibergorm/internal/validator"
-	arqdto "api_fibergorm/pkg/arquitetura/dto"
 	arqerrors "api_fibergorm/pkg/arquitetura/errors"
 	"api_fibergorm/pkg/arquitetura/service"
 
@@ -17,14 +16,14 @@ import (
 )
 
 // CategoriaService define a interface para os serviços de categoria
+// Compõe a interface base genérica e adiciona métodos específicos
 type CategoriaService interface {
-	Create(ctx context.Context, req *dto.CreateCategoriaRequest) (*dto.CategoriaResponse, error)
-	GetByID(ctx context.Context, id uint) (*dto.CategoriaResponse, error)
+	// Embute a interface base com os tipos específicos de Categoria
+	service.BaseService[models.Categoria, dto.CreateCategoriaRequest, dto.UpdateCategoriaRequest, dto.CategoriaResponse]
+
+	// Métodos específicos de Categoria
 	GetByIDWithProdutos(ctx context.Context, id uint) (*dto.CategoriaWithProdutosResponse, error)
-	GetAll(ctx context.Context, page, pageSize int) (*arqdto.PaginatedResponse[dto.CategoriaResponse], error)
 	GetAllActive(ctx context.Context) ([]dto.CategoriaResponse, error)
-	Update(ctx context.Context, id uint, req *dto.UpdateCategoriaRequest) (*dto.CategoriaResponse, error)
-	Delete(ctx context.Context, id uint) error
 }
 
 // categoriaService é a implementação do serviço usando a arquitetura base
@@ -48,12 +47,7 @@ func NewCategoriaService(db *gorm.DB, log *logrus.Logger) CategoriaService {
 	config.DefaultOrder = "nome ASC"
 
 	// Cria o serviço base usando o repositório base embutido
-	baseService := service.NewBaseService[
-		models.Categoria,
-		dto.CreateCategoriaRequest,
-		dto.UpdateCategoriaRequest,
-		dto.CategoriaResponse,
-	](repo.BaseRepositoryImpl, categoriaMapper, log, config)
+	baseService := service.NewBaseService(repo.BaseRepositoryImpl, categoriaMapper, log, config)
 
 	// Cria o validador específico
 	categoriaValidator := validator.NewCategoriaValidator(repo, log)

@@ -17,13 +17,13 @@ import (
 )
 
 // ProdutoService define a interface para os serviços de produto
+// Compõe a interface base genérica e adiciona métodos específicos
 type ProdutoService interface {
-	Create(ctx context.Context, req *dto.CreateProdutoRequest) (*dto.ProdutoResponse, error)
-	GetByID(ctx context.Context, id uint) (*dto.ProdutoResponse, error)
-	GetAll(ctx context.Context, page, pageSize int) (*arqdto.PaginatedResponse[dto.ProdutoResponse], error)
+	// Embute a interface base com os tipos específicos de Produto
+	service.BaseService[models.Produto, dto.CreateProdutoRequest, dto.UpdateProdutoRequest, dto.ProdutoResponse]
+
+	// Métodos específicos de Produto
 	GetByCategoriaID(ctx context.Context, categoriaID uint, page, pageSize int) (*arqdto.PaginatedResponse[dto.ProdutoResponse], error)
-	Update(ctx context.Context, id uint, req *dto.UpdateProdutoRequest) (*dto.ProdutoResponse, error)
-	Delete(ctx context.Context, id uint) error
 }
 
 // produtoService é a implementação do serviço usando a arquitetura base
@@ -47,12 +47,7 @@ func NewProdutoService(db *gorm.DB, log *logrus.Logger) ProdutoService {
 	config := service.DefaultServiceConfig("Produto")
 
 	// Cria o serviço base usando o repositório base embutido
-	baseService := service.NewBaseService[
-		models.Produto,
-		dto.CreateProdutoRequest,
-		dto.UpdateProdutoRequest,
-		dto.ProdutoResponse,
-	](repo.BaseRepositoryImpl, produtoMapper, log, config)
+	baseService := service.NewBaseService(repo.BaseRepositoryImpl, produtoMapper, log, config)
 
 	// Cria o validador específico
 	produtoValidator := validator.NewProdutoValidator(repo, db, log)
