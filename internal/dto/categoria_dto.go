@@ -48,13 +48,3 @@ type ProdutoSimpleResponse struct {
 	Preco     float64 `json:"preco" example:"3599.90"`
 }
 
-// CategoriaPaginatedResponse representa uma resposta paginada de categorias
-// @Description Resposta paginada com lista de categorias
-type CategoriaPaginatedResponse struct {
-	Data       []CategoriaResponse `json:"data"`
-	Total      int64               `json:"total" example:"50"`
-	Page       int                 `json:"page" example:"1"`
-	PageSize   int                 `json:"page_size" example:"10"`
-	TotalPages int                 `json:"total_pages" example:"5"`
-}
-

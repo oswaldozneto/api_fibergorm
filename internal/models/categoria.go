@@ -1,20 +1,15 @@
 package models
 
 import (
-	"time"
-
-	"gorm.io/gorm"
+	"api_fibergorm/pkg/arquitetura/entity"
 )
 
 // Categoria representa a entidade de categoria no banco de dados
 type Categoria struct {
-	ID        uint           `gorm:"primaryKey" json:"id"`
-	Nome      string         `gorm:"type:varchar(100);uniqueIndex;not null" json:"nome"`
-	Descricao string         `gorm:"type:varchar(255)" json:"descricao"`
-	Ativo     bool           `gorm:"default:true" json:"ativo"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+	entity.BaseEntity
+	Nome      string `gorm:"type:varchar(100);uniqueIndex;not null" json:"nome"`
+	Descricao string `gorm:"type:varchar(255)" json:"descricao"`
+	Ativo     bool   `gorm:"default:true" json:"ativo"`
 
 	// Relacionamento: Uma categoria tem muitos produtos
 	Produtos []Produto `gorm:"foreignKey:CategoriaID" json:"produtos,omitempty"`

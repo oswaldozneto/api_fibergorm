@@ -29,29 +29,6 @@ type ProdutoResponse struct {
 	UpdatedAt string  `json:"updated_at" example:"2024-01-01 10:00:00"`
 
 	// Dados da categoria associada
-	CategoriaID uint              `json:"categoria_id" example:"1"`
+	CategoriaID uint               `json:"categoria_id" example:"1"`
 	Categoria   *CategoriaResponse `json:"categoria,omitempty"`
-}
-
-// ErrorResponse representa uma resposta de erro da API
-// @Description Resposta de erro padrão da API
-type ErrorResponse struct {
-	Error   string            `json:"error" example:"Erro de validação"`
-	Details map[string]string `json:"details,omitempty"`
-}
-
-// SuccessResponse representa uma resposta de sucesso genérica
-// @Description Resposta de sucesso padrão da API
-type SuccessResponse struct {
-	Message string `json:"message" example:"Operação realizada com sucesso"`
-}
-
-// PaginatedResponse representa uma resposta paginada
-// @Description Resposta paginada com lista de produtos
-type PaginatedResponse struct {
-	Data       []ProdutoResponse `json:"data"`
-	Total      int64             `json:"total" example:"100"`
-	Page       int               `json:"page" example:"1"`
-	PageSize   int               `json:"page_size" example:"10"`
-	TotalPages int               `json:"total_pages" example:"10"`
 }
