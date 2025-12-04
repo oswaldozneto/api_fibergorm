@@ -22,11 +22,7 @@ type CategoriaHandler struct {
 func NewCategoriaHandler(s service.CategoriaService, log *logrus.Logger) *CategoriaHandler {
 	config := arqhandler.DefaultHandlerConfig("Categoria")
 
-	baseHandler := arqhandler.NewBaseHandler[
-		dto.CreateCategoriaRequest,
-		dto.UpdateCategoriaRequest,
-		dto.CategoriaResponse,
-	](s, log, config)
+	baseHandler := arqhandler.NewBaseHandler(s, log, config)
 
 	return &CategoriaHandler{
 		BaseHandlerImpl:  baseHandler,
@@ -93,73 +89,3 @@ func (h *CategoriaHandler) RegisterRoutes(router fiber.Router) {
 	router.Put("/:id", h.Update)
 	router.Delete("/:id", h.Delete)
 }
-
-// Documentação Swagger para os métodos herdados do BaseHandler
-// (necessário para o swag gerar a documentação corretamente)
-
-// Create godoc
-// @Summary Criar uma nova categoria
-// @Description Cria uma nova categoria com os dados fornecidos
-// @Tags Categorias
-// @Accept json
-// @Produce json
-// @Param categoria body dto.CreateCategoriaRequest true "Dados da categoria"
-// @Success 201 {object} dto.CategoriaResponse
-// @Failure 400 {object} arqdto.ErrorResponse
-// @Failure 409 {object} arqdto.ErrorResponse
-// @Failure 500 {object} arqdto.ErrorResponse
-// @Router /api/v1/categorias [post]
-
-// GetByID godoc
-// @Summary Buscar categoria por ID
-// @Description Retorna uma categoria específica pelo seu ID
-// @Tags Categorias
-// @Accept json
-// @Produce json
-// @Param id path int true "ID da categoria"
-// @Success 200 {object} dto.CategoriaResponse
-// @Failure 400 {object} arqdto.ErrorResponse
-// @Failure 404 {object} arqdto.ErrorResponse
-// @Failure 500 {object} arqdto.ErrorResponse
-// @Router /api/v1/categorias/{id} [get]
-
-// GetAll godoc
-// @Summary Listar todas as categorias
-// @Description Retorna uma lista paginada de todas as categorias
-// @Tags Categorias
-// @Accept json
-// @Produce json
-// @Param page query int false "Número da página" default(1)
-// @Param page_size query int false "Tamanho da página" default(10)
-// @Success 200 {object} arqdto.PaginatedResponse[dto.CategoriaResponse]
-// @Failure 500 {object} arqdto.ErrorResponse
-// @Router /api/v1/categorias [get]
-
-// Update godoc
-// @Summary Atualizar categoria
-// @Description Atualiza os dados de uma categoria existente
-// @Tags Categorias
-// @Accept json
-// @Produce json
-// @Param id path int true "ID da categoria"
-// @Param categoria body dto.UpdateCategoriaRequest true "Dados para atualização"
-// @Success 200 {object} dto.CategoriaResponse
-// @Failure 400 {object} arqdto.ErrorResponse
-// @Failure 404 {object} arqdto.ErrorResponse
-// @Failure 409 {object} arqdto.ErrorResponse
-// @Failure 500 {object} arqdto.ErrorResponse
-// @Router /api/v1/categorias/{id} [put]
-
-// Delete godoc
-// @Summary Excluir categoria
-// @Description Remove uma categoria pelo seu ID
-// @Tags Categorias
-// @Accept json
-// @Produce json
-// @Param id path int true "ID da categoria"
-// @Success 200 {object} arqdto.SuccessResponse
-// @Failure 400 {object} arqdto.ErrorResponse
-// @Failure 404 {object} arqdto.ErrorResponse
-// @Failure 409 {object} arqdto.ErrorResponse "Categoria possui produtos"
-// @Failure 500 {object} arqdto.ErrorResponse
-// @Router /api/v1/categorias/{id} [delete]
