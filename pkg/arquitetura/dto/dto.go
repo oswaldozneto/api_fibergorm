@@ -1,5 +1,7 @@
 package dto
 
+import "api_fibergorm/pkg/arquitetura/entity"
+
 // ErrorResponse representa uma resposta de erro padrão da API
 // @Description Resposta de erro padrão da API
 type ErrorResponse struct {
@@ -42,25 +44,18 @@ func NewPaginatedResponse[T any](data []T, total int64, page, pageSize int) *Pag
 	}
 }
 
-// CreateRequest é a interface que todos os DTOs de criação devem implementar
-type CreateRequest interface {
-	ToEntity() interface{}
-}
-
-// UpdateRequest é a interface que todos os DTOs de atualização devem implementar
-type UpdateRequest interface {
-	ApplyTo(entity interface{}) error
-}
-
-// Response é a interface base para respostas
-type Response interface {
-	FromEntity(entity interface{}) Response
-}
-
 // Mapper é uma interface genérica para mapeamento entre entidades e DTOs
-type Mapper[E any, CreateReq any, UpdateReq any, Resp any] interface {
-	ToEntity(req *CreateReq) *E
-	ToResponse(entity *E) *Resp
-	ApplyUpdate(entity *E, req *UpdateReq)
-}
+// E é o tipo ponteiro da entidade (ex: *models.Categoria)
+type Mapper[E entity.Entity, CreateReq any, UpdateReq any, Resp any] interface {
+	// ToEntity converte um request de criação para a entidade
+	// Retorna E (que já é ponteiro, ex: *models.Categoria)
+	ToEntity(req *CreateReq) E
 
+	// ToResponse converte uma entidade para response
+	// Recebe E (que já é ponteiro, ex: *models.Categoria)
+	ToResponse(entity E) *Resp
+
+	// ApplyUpdate aplica as alterações do request na entidade
+	// Recebe E (que já é ponteiro, ex: *models.Categoria)
+	ApplyUpdate(entity E, req *UpdateReq)
+}

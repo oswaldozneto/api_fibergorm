@@ -11,12 +11,12 @@ import (
 // Herda todas as funcionalidades do BaseRepositoryImpl e pode ser estendido
 // com métodos específicos conforme necessidade
 type CategoriaRepository struct {
-	*repository.BaseRepositoryImpl[models.Categoria]
+	*repository.BaseRepositoryImpl[*models.Categoria]
 }
 
 // NewCategoriaRepository cria uma nova instância do repositório de categorias
 func NewCategoriaRepository(db *gorm.DB) *CategoriaRepository {
-	baseRepo := repository.NewBaseRepository[models.Categoria](db).
+	baseRepo := repository.NewBaseRepository[*models.Categoria](db).
 		WithDefaultOrder("nome ASC")
 
 	return &CategoriaRepository{
@@ -26,4 +26,4 @@ func NewCategoriaRepository(db *gorm.DB) *CategoriaRepository {
 
 // Métodos específicos de Categoria podem ser adicionados aqui conforme necessidade
 // Exemplo:
-// func (r *CategoriaRepository) FindAllActive() ([]models.Categoria, error) { ... }
+// func (r *CategoriaRepository) FindAllActive() ([]*models.Categoria, error) { ... }

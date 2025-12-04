@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"reflect"
 
 	"api_fibergorm/pkg/arquitetura/entity"
 	arqerrors "api_fibergorm/pkg/arquitetura/errors"
@@ -9,38 +10,16 @@ import (
 	"gorm.io/gorm"
 )
 
-// EntityPtr é um constraint que garante que *E implementa entity.Entity
-type EntityPtr[E any] interface {
-	entity.Entity
-	*E
-}
-
-// BaseRepository define a interface base para operações de repositório
-type BaseRepository[E any, PE EntityPtr[E]] interface {
-	Create(entity *E) error
-	FindByID(id uint) (*E, error)
-	FindAll(page, pageSize int, orderBy string) ([]E, int64, error)
-	Update(entity *E) error
-	Delete(id uint) error
-	ExistsByID(id uint) (bool, error)
-	GetDB() *gorm.DB
-}
-
-// PreloadConfig define configuração de preload para relacionamentos
-type PreloadConfig struct {
-	Relations []string
-}
-
 // BaseRepositoryImpl é a implementação base do repositório genérico
-// E é o tipo da struct, PE é o ponteiro para E que implementa entity.Entity
-type BaseRepositoryImpl[E any] struct {
+// E é o tipo ponteiro da entidade que implementa entity.Entity (ex: *models.Categoria)
+type BaseRepositoryImpl[E entity.Entity] struct {
 	db           *gorm.DB
 	preloads     []string
 	defaultOrder string
 }
 
 // NewBaseRepository cria uma nova instância do repositório base
-func NewBaseRepository[E any](db *gorm.DB) *BaseRepositoryImpl[E] {
+func NewBaseRepository[E entity.Entity](db *gorm.DB) *BaseRepositoryImpl[E] {
 	return &BaseRepositoryImpl[E]{
 		db:           db,
 		preloads:     []string{},
@@ -48,13 +27,13 @@ func NewBaseRepository[E any](db *gorm.DB) *BaseRepositoryImpl[E] {
 	}
 }
 
-// WithPreloads configura os preloads padrão
+// WithPreloads configura os preloads padrão (retorna o próprio repositório para chaining)
 func (r *BaseRepositoryImpl[E]) WithPreloads(preloads ...string) *BaseRepositoryImpl[E] {
 	r.preloads = preloads
 	return r
 }
 
-// WithDefaultOrder configura a ordenação padrão
+// WithDefaultOrder configura a ordenação padrão (retorna o próprio repositório para chaining)
 func (r *BaseRepositoryImpl[E]) WithDefaultOrder(order string) *BaseRepositoryImpl[E] {
 	r.defaultOrder = order
 	return r
@@ -65,14 +44,25 @@ func (r *BaseRepositoryImpl[E]) GetDB() *gorm.DB {
 	return r.db
 }
 
+// newEntity cria uma nova instância da entidade usando reflection
+// Como E é um tipo ponteiro (ex: *models.Categoria), precisamos criar a struct subjacente
+func (r *BaseRepositoryImpl[E]) newEntity() E {
+	var zero E
+	t := reflect.TypeOf(zero)
+	if t.Kind() == reflect.Ptr {
+		return reflect.New(t.Elem()).Interface().(E)
+	}
+	return zero
+}
+
 // Create insere uma nova entidade no banco de dados
-func (r *BaseRepositoryImpl[E]) Create(entity *E) error {
+func (r *BaseRepositoryImpl[E]) Create(entity E) error {
 	return r.db.Create(entity).Error
 }
 
 // FindByID busca uma entidade pelo ID
-func (r *BaseRepositoryImpl[E]) FindByID(id uint) (*E, error) {
-	var entity E
+func (r *BaseRepositoryImpl[E]) FindByID(id uint) (E, error) {
+	entity := r.newEntity()
 	query := r.db
 
 	// Aplica preloads se configurados
@@ -80,33 +70,33 @@ func (r *BaseRepositoryImpl[E]) FindByID(id uint) (*E, error) {
 		query = query.Preload(preload)
 	}
 
-	err := query.First(&entity, id).Error
+	err := query.First(entity, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, arqerrors.ErrNotFound
+			return entity, arqerrors.ErrNotFound
 		}
-		return nil, err
+		return entity, err
 	}
-	return &entity, nil
+	return entity, nil
 }
 
 // FindByIDWithPreloads busca uma entidade pelo ID com preloads específicos
-func (r *BaseRepositoryImpl[E]) FindByIDWithPreloads(id uint, preloads ...string) (*E, error) {
-	var entity E
+func (r *BaseRepositoryImpl[E]) FindByIDWithPreloads(id uint, preloads ...string) (E, error) {
+	entity := r.newEntity()
 	query := r.db
 
 	for _, preload := range preloads {
 		query = query.Preload(preload)
 	}
 
-	err := query.First(&entity, id).Error
+	err := query.First(entity, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, arqerrors.ErrNotFound
+			return entity, arqerrors.ErrNotFound
 		}
-		return nil, err
+		return entity, err
 	}
-	return &entity, nil
+	return entity, nil
 }
 
 // FindAll retorna todas as entidades com paginação
@@ -115,7 +105,7 @@ func (r *BaseRepositoryImpl[E]) FindAll(page, pageSize int, orderBy string) ([]E
 	var total int64
 
 	// Conta o total de registros
-	if err := r.db.Model(new(E)).Count(&total).Error; err != nil {
+	if err := r.db.Model(r.newEntity()).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -148,7 +138,7 @@ func (r *BaseRepositoryImpl[E]) FindAllWithPreloads(page, pageSize int, orderBy 
 	var entities []E
 	var total int64
 
-	if err := r.db.Model(new(E)).Count(&total).Error; err != nil {
+	if err := r.db.Model(r.newEntity()).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -177,7 +167,7 @@ func (r *BaseRepositoryImpl[E]) FindAllWhere(page, pageSize int, orderBy string,
 	var entities []E
 	var total int64
 
-	if err := r.db.Model(new(E)).Where(condition, args...).Count(&total).Error; err != nil {
+	if err := r.db.Model(r.newEntity()).Where(condition, args...).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -202,32 +192,32 @@ func (r *BaseRepositoryImpl[E]) FindAllWhere(page, pageSize int, orderBy string,
 }
 
 // FindOneWhere busca uma entidade com condição
-func (r *BaseRepositoryImpl[E]) FindOneWhere(condition interface{}, args ...interface{}) (*E, error) {
-	var entity E
+func (r *BaseRepositoryImpl[E]) FindOneWhere(condition interface{}, args ...interface{}) (E, error) {
+	entity := r.newEntity()
 	query := r.db.Where(condition, args...)
 
 	for _, preload := range r.preloads {
 		query = query.Preload(preload)
 	}
 
-	err := query.First(&entity).Error
+	err := query.First(entity).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, arqerrors.ErrNotFound
+			return entity, arqerrors.ErrNotFound
 		}
-		return nil, err
+		return entity, err
 	}
-	return &entity, nil
+	return entity, nil
 }
 
 // Update atualiza uma entidade existente
-func (r *BaseRepositoryImpl[E]) Update(entity *E) error {
+func (r *BaseRepositoryImpl[E]) Update(entity E) error {
 	return r.db.Save(entity).Error
 }
 
 // Delete remove uma entidade pelo ID (soft delete se configurado)
 func (r *BaseRepositoryImpl[E]) Delete(id uint) error {
-	result := r.db.Delete(new(E), id)
+	result := r.db.Delete(r.newEntity(), id)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -240,14 +230,14 @@ func (r *BaseRepositoryImpl[E]) Delete(id uint) error {
 // ExistsByID verifica se existe uma entidade com o ID informado
 func (r *BaseRepositoryImpl[E]) ExistsByID(id uint) (bool, error) {
 	var count int64
-	err := r.db.Model(new(E)).Where("id = ?", id).Count(&count).Error
+	err := r.db.Model(r.newEntity()).Where("id = ?", id).Count(&count).Error
 	return count > 0, err
 }
 
 // ExistsWhere verifica se existe uma entidade com a condição informada
 func (r *BaseRepositoryImpl[E]) ExistsWhere(condition interface{}, args ...interface{}) (bool, error) {
 	var count int64
-	err := r.db.Model(new(E)).Where(condition, args...).Count(&count).Error
+	err := r.db.Model(r.newEntity()).Where(condition, args...).Count(&count).Error
 	return count > 0, err
 }
 
@@ -256,13 +246,13 @@ func (r *BaseRepositoryImpl[E]) ExistsWhereExcludingID(id uint, condition string
 	var count int64
 	fullCondition := condition + " AND id != ?"
 	fullArgs := append(args, id)
-	err := r.db.Model(new(E)).Where(fullCondition, fullArgs...).Count(&count).Error
+	err := r.db.Model(r.newEntity()).Where(fullCondition, fullArgs...).Count(&count).Error
 	return count > 0, err
 }
 
 // CountWhere conta registros com condição
 func (r *BaseRepositoryImpl[E]) CountWhere(condition interface{}, args ...interface{}) (int64, error) {
 	var count int64
-	err := r.db.Model(new(E)).Where(condition, args...).Count(&count).Error
+	err := r.db.Model(r.newEntity()).Where(condition, args...).Count(&count).Error
 	return count, err
 }

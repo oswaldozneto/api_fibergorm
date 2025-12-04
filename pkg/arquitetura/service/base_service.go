@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"api_fibergorm/pkg/arquitetura/dto"
+	"api_fibergorm/pkg/arquitetura/entity"
 	arqerrors "api_fibergorm/pkg/arquitetura/errors"
 	"api_fibergorm/pkg/arquitetura/repository"
 
@@ -11,7 +12,8 @@ import (
 )
 
 // BaseService define a interface base para serviços
-type BaseService[E any, CreateReq any, UpdateReq any, Resp any] interface {
+// E é o tipo ponteiro da entidade que implementa entity.Entity (ex: *models.Categoria)
+type BaseService[E entity.Entity, CreateReq any, UpdateReq any, Resp any] interface {
 	Create(ctx context.Context, req *CreateReq) (*Resp, error)
 	GetByID(ctx context.Context, id uint) (*Resp, error)
 	GetAll(ctx context.Context, page, pageSize int) (*dto.PaginatedResponse[Resp], error)
@@ -36,17 +38,18 @@ func DefaultServiceConfig(entityName string) *ServiceConfig {
 }
 
 // BaseServiceImpl é a implementação base do serviço genérico
-type BaseServiceImpl[E any, CreateReq any, UpdateReq any, Resp any] struct {
+// E é o tipo ponteiro da entidade que implementa entity.Entity (ex: *models.Categoria)
+type BaseServiceImpl[E entity.Entity, CreateReq any, UpdateReq any, Resp any] struct {
 	repo            *repository.BaseRepositoryImpl[E]
 	mapper          dto.Mapper[E, CreateReq, UpdateReq, Resp]
 	validator       EntityValidator[E, CreateReq, UpdateReq]
 	structValidator *StructValidator
 	log             *logrus.Logger
-	config          *ServiceConfig
+	Config          *ServiceConfig
 }
 
 // NewBaseService cria uma nova instância do serviço base
-func NewBaseService[E any, CreateReq any, UpdateReq any, Resp any](
+func NewBaseService[E entity.Entity, CreateReq any, UpdateReq any, Resp any](
 	repo *repository.BaseRepositoryImpl[E],
 	mapper dto.Mapper[E, CreateReq, UpdateReq, Resp],
 	log *logrus.Logger,
@@ -58,7 +61,7 @@ func NewBaseService[E any, CreateReq any, UpdateReq any, Resp any](
 		validator:       &NoOpValidator[E, CreateReq, UpdateReq]{},
 		structValidator: NewStructValidator(),
 		log:             log,
-		config:          config,
+		Config:          config,
 	}
 }
 
@@ -80,7 +83,7 @@ func (s *BaseServiceImpl[E, CreateReq, UpdateReq, Resp]) GetLogger() *logrus.Log
 
 // Create cria uma nova entidade
 func (s *BaseServiceImpl[E, CreateReq, UpdateReq, Resp]) Create(ctx context.Context, req *CreateReq) (*Resp, error) {
-	s.log.WithField("entity", s.config.EntityName).Info("Iniciando criação")
+	s.log.WithField("entity", s.Config.EntityName).Info("Iniciando criação")
 
 	// Validação de struct (tags de validação)
 	if structErrors := s.structValidator.ToValidationResult(req); structErrors != nil && structErrors.HasErrors() {
@@ -108,7 +111,7 @@ func (s *BaseServiceImpl[E, CreateReq, UpdateReq, Resp]) Create(ctx context.Cont
 		return nil, err
 	}
 
-	s.log.WithField("entity", s.config.EntityName).Info("Criado com sucesso")
+	s.log.WithField("entity", s.Config.EntityName).Info("Criado com sucesso")
 
 	// Converte para response
 	response := s.mapper.ToResponse(entity)
@@ -118,7 +121,7 @@ func (s *BaseServiceImpl[E, CreateReq, UpdateReq, Resp]) Create(ctx context.Cont
 // GetByID busca uma entidade pelo ID
 func (s *BaseServiceImpl[E, CreateReq, UpdateReq, Resp]) GetByID(ctx context.Context, id uint) (*Resp, error) {
 	s.log.WithFields(logrus.Fields{
-		"entity": s.config.EntityName,
+		"entity": s.Config.EntityName,
 		"id":     id,
 	}).Info("Buscando por ID")
 
@@ -126,7 +129,7 @@ func (s *BaseServiceImpl[E, CreateReq, UpdateReq, Resp]) GetByID(ctx context.Con
 	if err != nil {
 		if arqerrors.IsNotFound(err) {
 			s.log.WithField("id", id).Warn("Não encontrado")
-			return nil, arqerrors.NewBusinessError("NOT_FOUND", s.config.EntityName+" não encontrado(a)")
+			return nil, arqerrors.NewBusinessError("NOT_FOUND", s.Config.EntityName+" não encontrado(a)")
 		}
 		s.log.WithError(err).Error("Erro ao buscar")
 		return nil, err
@@ -139,7 +142,7 @@ func (s *BaseServiceImpl[E, CreateReq, UpdateReq, Resp]) GetByID(ctx context.Con
 // GetAll retorna todas as entidades com paginação
 func (s *BaseServiceImpl[E, CreateReq, UpdateReq, Resp]) GetAll(ctx context.Context, page, pageSize int) (*dto.PaginatedResponse[Resp], error) {
 	s.log.WithFields(logrus.Fields{
-		"entity":   s.config.EntityName,
+		"entity":   s.Config.EntityName,
 		"page":     page,
 		"pageSize": pageSize,
 	}).Info("Listando")
@@ -147,7 +150,7 @@ func (s *BaseServiceImpl[E, CreateReq, UpdateReq, Resp]) GetAll(ctx context.Cont
 	// Normaliza paginação
 	page, pageSize = s.normalizePagination(page, pageSize)
 
-	entities, total, err := s.repo.FindAll(page, pageSize, s.config.DefaultOrder)
+	entities, total, err := s.repo.FindAll(page, pageSize, s.Config.DefaultOrder)
 	if err != nil {
 		s.log.WithError(err).Error("Erro ao listar")
 		return nil, err
@@ -156,7 +159,7 @@ func (s *BaseServiceImpl[E, CreateReq, UpdateReq, Resp]) GetAll(ctx context.Cont
 	// Converte para responses
 	responses := make([]Resp, len(entities))
 	for i := range entities {
-		responses[i] = *s.mapper.ToResponse(&entities[i])
+		responses[i] = *s.mapper.ToResponse(entities[i])
 	}
 
 	return dto.NewPaginatedResponse(responses, total, page, pageSize), nil
@@ -165,7 +168,7 @@ func (s *BaseServiceImpl[E, CreateReq, UpdateReq, Resp]) GetAll(ctx context.Cont
 // Update atualiza uma entidade existente
 func (s *BaseServiceImpl[E, CreateReq, UpdateReq, Resp]) Update(ctx context.Context, id uint, req *UpdateReq) (*Resp, error) {
 	s.log.WithFields(logrus.Fields{
-		"entity": s.config.EntityName,
+		"entity": s.Config.EntityName,
 		"id":     id,
 	}).Info("Iniciando atualização")
 
@@ -174,7 +177,7 @@ func (s *BaseServiceImpl[E, CreateReq, UpdateReq, Resp]) Update(ctx context.Cont
 	if err != nil {
 		if arqerrors.IsNotFound(err) {
 			s.log.WithField("id", id).Warn("Não encontrado para atualização")
-			return nil, arqerrors.NewBusinessError("NOT_FOUND", s.config.EntityName+" não encontrado(a)")
+			return nil, arqerrors.NewBusinessError("NOT_FOUND", s.Config.EntityName+" não encontrado(a)")
 		}
 		s.log.WithError(err).Error("Erro ao buscar para atualização")
 		return nil, err
@@ -217,7 +220,7 @@ func (s *BaseServiceImpl[E, CreateReq, UpdateReq, Resp]) Update(ctx context.Cont
 // Delete remove uma entidade pelo ID
 func (s *BaseServiceImpl[E, CreateReq, UpdateReq, Resp]) Delete(ctx context.Context, id uint) error {
 	s.log.WithFields(logrus.Fields{
-		"entity": s.config.EntityName,
+		"entity": s.Config.EntityName,
 		"id":     id,
 	}).Info("Iniciando exclusão")
 
@@ -226,7 +229,7 @@ func (s *BaseServiceImpl[E, CreateReq, UpdateReq, Resp]) Delete(ctx context.Cont
 	if err != nil {
 		if arqerrors.IsNotFound(err) {
 			s.log.WithField("id", id).Warn("Não encontrado para exclusão")
-			return arqerrors.NewBusinessError("NOT_FOUND", s.config.EntityName+" não encontrado(a)")
+			return arqerrors.NewBusinessError("NOT_FOUND", s.Config.EntityName+" não encontrado(a)")
 		}
 		s.log.WithError(err).Error("Erro ao buscar para exclusão")
 		return err
@@ -262,8 +265,8 @@ func (s *BaseServiceImpl[E, CreateReq, UpdateReq, Resp]) normalizePagination(pag
 	if pageSize < 1 {
 		pageSize = 10
 	}
-	if pageSize > s.config.MaxPageSize {
-		pageSize = s.config.MaxPageSize
+	if pageSize > s.Config.MaxPageSize {
+		pageSize = s.Config.MaxPageSize
 	}
 	return page, pageSize
 }

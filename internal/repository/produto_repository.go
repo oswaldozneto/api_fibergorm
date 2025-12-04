@@ -11,12 +11,12 @@ import (
 // Herda todas as funcionalidades do BaseRepositoryImpl e pode ser estendido
 // com métodos específicos conforme necessidade
 type ProdutoRepository struct {
-	*repository.BaseRepositoryImpl[models.Produto]
+	*repository.BaseRepositoryImpl[*models.Produto]
 }
 
 // NewProdutoRepository cria uma nova instância do repositório de produtos
 func NewProdutoRepository(db *gorm.DB) *ProdutoRepository {
-	baseRepo := repository.NewBaseRepository[models.Produto](db).
+	baseRepo := repository.NewBaseRepository[*models.Produto](db).
 		WithPreloads("Categoria").
 		WithDefaultOrder("id ASC")
 
@@ -27,4 +27,4 @@ func NewProdutoRepository(db *gorm.DB) *ProdutoRepository {
 
 // Métodos específicos de Produto podem ser adicionados aqui conforme necessidade
 // Exemplo:
-// func (r *ProdutoRepository) FindByCategoria(categoriaID uint) ([]models.Produto, error) { ... }
+// func (r *ProdutoRepository) FindByCategoria(categoriaID uint) ([]*models.Produto, error) { ... }

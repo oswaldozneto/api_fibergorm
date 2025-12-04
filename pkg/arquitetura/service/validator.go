@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 
+	"api_fibergorm/pkg/arquitetura/entity"
+
 	"github.com/go-playground/validator/v10"
 )
 
@@ -55,30 +57,32 @@ func (v *ValidationResult) Merge(other *ValidationResult) {
 }
 
 // EntityValidator é a interface para validações específicas de uma entidade
-// As entidades podem implementar esta interface para fornecer validações customizadas
-type EntityValidator[E any, CreateReq any, UpdateReq any] interface {
+// E é o tipo ponteiro da entidade (ex: *models.Categoria)
+type EntityValidator[E entity.Entity, CreateReq any, UpdateReq any] interface {
 	// ValidateCreate valida a criação de uma entidade
 	ValidateCreate(ctx *ValidationContext, req *CreateReq) *ValidationResult
 
 	// ValidateUpdate valida a atualização de uma entidade
-	ValidateUpdate(ctx *ValidationContext, entity *E, req *UpdateReq) *ValidationResult
+	// entity já é ponteiro (E = *models.Categoria)
+	ValidateUpdate(ctx *ValidationContext, entity E, req *UpdateReq) *ValidationResult
 
 	// ValidateDelete valida a exclusão de uma entidade
-	ValidateDelete(ctx *ValidationContext, entity *E) *ValidationResult
+	// entity já é ponteiro (E = *models.Categoria)
+	ValidateDelete(ctx *ValidationContext, entity E) *ValidationResult
 }
 
 // NoOpValidator é um validador que não faz nada (para entidades sem validações customizadas)
-type NoOpValidator[E any, CreateReq any, UpdateReq any] struct{}
+type NoOpValidator[E entity.Entity, CreateReq any, UpdateReq any] struct{}
 
 func (n *NoOpValidator[E, CreateReq, UpdateReq]) ValidateCreate(ctx *ValidationContext, req *CreateReq) *ValidationResult {
 	return nil
 }
 
-func (n *NoOpValidator[E, CreateReq, UpdateReq]) ValidateUpdate(ctx *ValidationContext, entity *E, req *UpdateReq) *ValidationResult {
+func (n *NoOpValidator[E, CreateReq, UpdateReq]) ValidateUpdate(ctx *ValidationContext, entity E, req *UpdateReq) *ValidationResult {
 	return nil
 }
 
-func (n *NoOpValidator[E, CreateReq, UpdateReq]) ValidateDelete(ctx *ValidationContext, entity *E) *ValidationResult {
+func (n *NoOpValidator[E, CreateReq, UpdateReq]) ValidateDelete(ctx *ValidationContext, entity E) *ValidationResult {
 	return nil
 }
 

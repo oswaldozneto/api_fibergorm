@@ -20,7 +20,8 @@ import (
 // Compõe a interface base genérica e adiciona métodos específicos
 type ProdutoService interface {
 	// Embute a interface base com os tipos específicos de Produto
-	service.BaseService[models.Produto, dto.CreateProdutoRequest, dto.UpdateProdutoRequest, dto.ProdutoResponse]
+	// *models.Produto é o tipo ponteiro que implementa entity.Entity
+	service.BaseService[*models.Produto, dto.CreateProdutoRequest, dto.UpdateProdutoRequest, dto.ProdutoResponse]
 
 	// Métodos específicos de Produto
 	GetByCategoriaID(ctx context.Context, categoriaID uint, page, pageSize int) (*arqdto.PaginatedResponse[dto.ProdutoResponse], error)
@@ -28,7 +29,7 @@ type ProdutoService interface {
 
 // produtoService é a implementação do serviço usando a arquitetura base
 type produtoService struct {
-	*service.BaseServiceImpl[models.Produto, dto.CreateProdutoRequest, dto.UpdateProdutoRequest, dto.ProdutoResponse]
+	*service.BaseServiceImpl[*models.Produto, dto.CreateProdutoRequest, dto.UpdateProdutoRequest, dto.ProdutoResponse]
 	repo   *repository.ProdutoRepository
 	mapper *mapper.ProdutoMapper
 	db     *gorm.DB
@@ -137,7 +138,7 @@ func (s *produtoService) GetByCategoriaID(ctx context.Context, categoriaID uint,
 	// Converte para responses
 	responses := make([]dto.ProdutoResponse, len(produtos))
 	for i := range produtos {
-		responses[i] = *s.mapper.ToResponse(&produtos[i])
+		responses[i] = *s.mapper.ToResponse(produtos[i])
 	}
 
 	return arqdto.NewPaginatedResponse(responses, total, page, pageSize), nil

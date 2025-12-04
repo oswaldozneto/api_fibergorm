@@ -19,7 +19,8 @@ import (
 // Compõe a interface base genérica e adiciona métodos específicos
 type CategoriaService interface {
 	// Embute a interface base com os tipos específicos de Categoria
-	service.BaseService[models.Categoria, dto.CreateCategoriaRequest, dto.UpdateCategoriaRequest, dto.CategoriaResponse]
+	// *models.Categoria é o tipo ponteiro que implementa entity.Entity
+	service.BaseService[*models.Categoria, dto.CreateCategoriaRequest, dto.UpdateCategoriaRequest, dto.CategoriaResponse]
 
 	// Métodos específicos de Categoria
 	GetByIDWithProdutos(ctx context.Context, id uint) (*dto.CategoriaWithProdutosResponse, error)
@@ -28,7 +29,7 @@ type CategoriaService interface {
 
 // categoriaService é a implementação do serviço usando a arquitetura base
 type categoriaService struct {
-	*service.BaseServiceImpl[models.Categoria, dto.CreateCategoriaRequest, dto.UpdateCategoriaRequest, dto.CategoriaResponse]
+	*service.BaseServiceImpl[*models.Categoria, dto.CreateCategoriaRequest, dto.UpdateCategoriaRequest, dto.CategoriaResponse]
 	repo   *repository.CategoriaRepository
 	mapper *mapper.CategoriaMapper
 	log    *logrus.Logger
@@ -92,7 +93,7 @@ func (s *categoriaService) GetAllActive(ctx context.Context) ([]dto.CategoriaRes
 
 	responses := make([]dto.CategoriaResponse, len(categorias))
 	for i := range categorias {
-		responses[i] = *s.mapper.ToResponse(&categorias[i])
+		responses[i] = *s.mapper.ToResponse(categorias[i])
 	}
 
 	return responses, nil
