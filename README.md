@@ -8,6 +8,7 @@ API RESTful de produtos desenvolvida em Go utilizando **Fiber** como framework w
 - **Fiber v2** - Framework web extremamente rápido
 - **GORM** - ORM para Go
 - **PostgreSQL** - Banco de dados relacional
+- **Prometheus** - Métricas e monitoramento
 - **Logrus** - Logging estruturado
 - **Validator v10** - Validação de dados
 - **Swagger** - Documentação da API
@@ -143,6 +144,7 @@ DB_HOST=meuhost DB_PASSWORD=minhasenha go run cmd/api/main.go
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
 | GET | `/health` | Health check |
+| GET | `/metrics` | Métricas Prometheus |
 | GET | `/swagger/*` | Documentação Swagger |
 
 ## 📖 Documentação Swagger
@@ -245,10 +247,58 @@ Os logs são estruturados em formato JSON usando Logrus:
 4. **Model**: Representa as entidades do domínio
 5. **DTO**: Objetos de transferência de dados entre camadas
 
+## 📊 Métricas Prometheus
+
+A aplicação expõe métricas no endpoint `/metrics` para monitoramento com Prometheus.
+
+### Métricas Disponíveis
+
+| Métrica | Tipo | Descrição |
+|---------|------|-----------|
+| `http_requests_total` | Counter | Total de requisições HTTP recebidas |
+| `http_request_duration_seconds` | Histogram | Duração das requisições HTTP em segundos |
+| `http_requests_in_flight` | Gauge | Número de requisições em processamento |
+| `http_response_size_bytes` | Histogram | Tamanho das respostas HTTP em bytes |
+| `database_queries_total` | Counter | Total de queries executadas no banco |
+| `database_query_duration_seconds` | Histogram | Duração das queries em segundos |
+
+### Labels das Métricas HTTP
+
+- `method`: Método HTTP (GET, POST, PUT, DELETE)
+- `path`: Padrão da rota (ex: `/api/v1/produtos/:id`)
+- `status`: Código de status HTTP (200, 201, 400, 404, 500)
+
+### Exemplo de Consulta PromQL
+
+```promql
+# Taxa de requisições por segundo nos últimos 5 minutos
+rate(http_requests_total[5m])
+
+# Latência P95 das requisições
+histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+
+# Requisições com erro (status >= 400)
+sum(rate(http_requests_total{status=~"4..|5.."}[5m]))
+```
+
+### Configuração no Prometheus
+
+Adicione ao seu `prometheus.yml`:
+
+```yaml
+scrape_configs:
+  - job_name: 'api-produtos'
+    static_configs:
+      - targets: ['localhost:3000']
+    metrics_path: /metrics
+    scrape_interval: 15s
+```
+
 ## 📈 Benefícios Demonstrados
 
 - **Fiber**: Alta performance, sintaxe familiar (Express-like)
 - **GORM**: ORM maduro, migrations automáticas, relacionamentos
+- **Prometheus**: Métricas detalhadas para observabilidade
 - **Arquitetura limpa**: Fácil manutenção e escalabilidade
 - **Logs estruturados**: Facilita debugging e monitoramento
 - **Swagger**: Documentação automática e interativa

@@ -2,6 +2,7 @@ package routes
 
 import (
 	"api_fibergorm/internal/handler"
+	"api_fibergorm/internal/metrics"
 	"api_fibergorm/internal/service"
 
 	"github.com/gofiber/fiber/v2"
@@ -16,6 +17,9 @@ import (
 func SetupRoutes(app *fiber.App, db *gorm.DB, log *logrus.Logger) {
 	// Swagger
 	app.Get("/swagger/*", swagger.HandlerDefault)
+
+	// Prometheus metrics endpoint
+	app.Get("/metrics", metrics.MetricsHandler())
 
 	// Health check
 	app.Get("/health", func(c *fiber.Ctx) error {

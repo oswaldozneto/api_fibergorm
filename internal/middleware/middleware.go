@@ -3,6 +3,8 @@ package middleware
 import (
 	"time"
 
+	"api_fibergorm/internal/metrics"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -26,6 +28,9 @@ func SetupMiddlewares(app *fiber.App, log *logrus.Logger) {
 		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 	}))
+
+	// Prometheus metrics middleware
+	app.Use(metrics.PrometheusMiddleware())
 
 	// Logger middleware customizado com Logrus
 	app.Use(LoggerMiddleware(log))
