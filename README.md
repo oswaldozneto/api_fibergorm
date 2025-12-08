@@ -9,6 +9,7 @@ API RESTful de produtos desenvolvida em Go utilizando **Fiber** como framework w
 - **GORM** - ORM para Go
 - **PostgreSQL** - Banco de dados relacional
 - **Prometheus** - Métricas e monitoramento
+- **Loki** - Agregação de logs (Grafana)
 - **Logrus** - Logging estruturado
 - **Validator v10** - Validação de dados
 - **Swagger** - Documentação da API
@@ -87,6 +88,18 @@ Todas as variáveis são **opcionais** e possuem valores padrão:
 |----------|-----------|--------|
 | `LOG_LEVEL` | Nível de log (debug, info, warn, error) | `debug` |
 | `LOG_FORMAT` | Formato do log (json, text) | `json` |
+
+### Loki (Observabilidade)
+
+| Variável | Descrição | Padrão |
+|----------|-----------|--------|
+| `LOKI_ENABLED` | Habilita integração com Loki | `true` |
+| `LOKI_URL` | URL do endpoint push do Loki | `http://10.110.0.239:3100/loki/api/v1/push` |
+| `LOKI_SERVICE_NAME` | Nome do job para identificação no Grafana | `ARQUITETURA_FIBER_GORM` |
+| `LOKI_BATCH_SIZE` | Quantidade de logs por batch | `10` |
+| `LOKI_BATCH_WAIT_SECONDS` | Intervalo máximo entre envios (segundos) | `5` |
+| `LOKI_TIMEOUT_SECONDS` | Timeout das requisições HTTP (segundos) | `10` |
+| `ENVIRONMENT` | Ambiente da aplicação (label no Loki) | `development` |
 
 ## 🏃‍♂️ Como Executar
 
@@ -287,11 +300,96 @@ Adicione ao seu `prometheus.yml`:
 
 ```yaml
 scrape_configs:
-  - job_name: 'api-produtos'
+  - job_name: 'api_fibergorm'
     static_configs:
       - targets: ['localhost:3000']
     metrics_path: /metrics
     scrape_interval: 15s
+```
+
+## 📋 Integração com Loki/Grafana
+
+A aplicação envia logs automaticamente para o Loki, permitindo visualização e consulta no Grafana.
+
+### Configuração Padrão
+
+- **URL do Loki**: `http://10.110.0.239:3100/loki/api/v1/push`
+- **Job Name**: `ARQUITETURA_FIBER_GORM`
+
+### Labels dos Logs
+
+Cada log enviado ao Loki contém os seguintes labels:
+
+| Label | Descrição |
+|-------|-----------|
+| `job` | Nome do serviço (`ARQUITETURA_FIBER_GORM`) |
+| `level` | Nível do log (debug, info, warn, error) |
+| `hostname` | Nome do host da aplicação |
+| `app` | Nome da aplicação (`api_fibergorm`) |
+| `environment` | Ambiente (development, production) |
+
+### Campos dos Logs
+
+Cada entrada de log contém os seguintes campos JSON:
+
+```json
+{
+  "level": "info",
+  "msg": "Requisição HTTP",
+  "time": "2024-01-15T10:30:00.123456789Z",
+  "hostname": "api-server-01",
+  "service": "ARQUITETURA_FIBER_GORM",
+  "method": "GET",
+  "path": "/api/v1/produtos",
+  "status": 200,
+  "latency": "5.123ms"
+}
+```
+
+### Consultas LogQL no Grafana
+
+```logql
+# Todos os logs do serviço
+{job="ARQUITETURA_FIBER_GORM"}
+
+# Apenas erros
+{job="ARQUITETURA_FIBER_GORM", level="error"}
+
+# Logs de requisições HTTP
+{job="ARQUITETURA_FIBER_GORM"} |= "Requisição HTTP"
+
+# Logs com latência > 1s
+{job="ARQUITETURA_FIBER_GORM"} | json | latency > 1s
+
+# Erros nos últimos 5 minutos
+{job="ARQUITETURA_FIBER_GORM", level=~"error|warn"} | json
+```
+
+### Dashboard Grafana
+
+Para criar um dashboard, use as seguintes queries:
+
+1. **Taxa de logs por nível**:
+```logql
+sum by (level) (rate({job="ARQUITETURA_FIBER_GORM"}[5m]))
+```
+
+2. **Contagem de erros**:
+```logql
+count_over_time({job="ARQUITETURA_FIBER_GORM", level="error"}[1h])
+```
+
+3. **Logs de requisições lentas**:
+```logql
+{job="ARQUITETURA_FIBER_GORM"} | json | latency > 500ms
+```
+
+### Desabilitar Loki
+
+Para desabilitar o envio de logs ao Loki:
+
+```bash
+LOKI_ENABLED=false go run cmd/api/main.go
 ```
 
 ## 📈 Benefícios Demonstrados
@@ -299,6 +397,7 @@ scrape_configs:
 - **Fiber**: Alta performance, sintaxe familiar (Express-like)
 - **GORM**: ORM maduro, migrations automáticas, relacionamentos
 - **Prometheus**: Métricas detalhadas para observabilidade
+- **Loki/Grafana**: Agregação e visualização de logs centralizada
 - **Arquitetura limpa**: Fácil manutenção e escalabilidade
 - **Logs estruturados**: Facilita debugging e monitoramento
 - **Swagger**: Documentação automática e interativa

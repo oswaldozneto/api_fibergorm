@@ -25,7 +25,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, log *logrus.Logger) {
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"status":  "healthy",
-			"service": "api-produtos",
+			"service": "api_fibergorm",
 		})
 	})
 

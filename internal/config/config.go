@@ -4,6 +4,8 @@ import (
 	"os"
 	"strconv"
 
+	"api_fibergorm/internal/logging"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -100,6 +102,19 @@ func SetupLogger(level string) *logrus.Logger {
 		logLevel = logrus.DebugLevel
 	}
 	log.SetLevel(logLevel)
+
+	// Configura integração com Loki
+	lokiConfig := logging.DefaultLokiConfig()
+	lokiHook, err := logging.NewLokiHook(lokiConfig)
+	if err != nil {
+		log.WithError(err).Warn("Falha ao configurar integração com Loki")
+	} else if lokiHook != nil {
+		log.AddHook(lokiHook)
+		log.WithFields(logrus.Fields{
+			"loki_url":      lokiConfig.URL,
+			"loki_job_name": lokiConfig.ServiceName,
+		}).Info("Integração com Loki configurada")
+	}
 
 	return log
 }
