@@ -34,6 +34,10 @@ api_fibergorm/
 │   ├── handler/
 │   │   ├── categoria_handler.go # Controller de Categorias
 │   │   └── produto_handler.go   # Controller de Produtos
+│   ├── logging/
+│   │   └── loki.go              # Integração com Loki/Grafana
+│   ├── metrics/
+│   │   └── prometheus.go        # Métricas Prometheus
 │   ├── middleware/
 │   │   └── middleware.go        # Middlewares da aplicação
 │   ├── models/
@@ -49,6 +53,21 @@ api_fibergorm/
 │   │   └── produto_service.go
 │   └── validator/
 │       └── validator.go         # Validador customizado
+├── pkg/
+│   └── arquitetura/
+│       ├── dto/
+│       │   └── dto.go           # DTOs base genéricos
+│       ├── entity/
+│       │   └── entity.go        # Entidade base com campos comuns
+│       ├── errors/
+│       │   └── errors.go        # Erros padronizados da aplicação
+│       ├── handler/
+│       │   └── base_handler.go  # Handler base genérico
+│       ├── repository/
+│       │   └── base_repository.go # Repository base com CRUD genérico
+│       └── service/
+│           ├── base_service.go  # Service base genérico
+│           └── validator.go     # Interface de validação
 ├── docs/                        # Documentação Swagger
 ├── docker-compose.yml
 ├── Dockerfile
